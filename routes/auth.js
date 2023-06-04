@@ -5,11 +5,20 @@ const DButils = require("../routes/utils/DButils");
 const recipe_utils = require("./utils/recipes_utils");
 const bcrypt = require("bcrypt");
 
+/**
+ * Registers a new user in the system.
+ * @param {Object} req - The request object containing the user details.
+ * @param {string} req.body.username - The username of the new user.
+ * @param {string} req.body.firstName - The first name of the new user.
+ * @param {string} req.body.lastName - The last name of the new user.
+ * @param {string} req.body.country - The country of the new user.
+ * @param {string} req.body.password - The password of the new user.
+ * @param {string} req.body.confirmPassword - The confirmed password of the new user.
+ * @param {string} req.body.email - The email of the new user.
+ *
+ */
 router.post("/Register", async (req, res, next) => {
   try {
-    // parameters exists
-    // valid parameters
-    // username exists
     let user_details = {
       username: req.body.username,
       firstname: req.body.firstName,
@@ -59,6 +68,9 @@ router.post("/Register", async (req, res, next) => {
   }
 });
 
+/**
+ * Handles a POST request to login a user.
+ */
 router.post("/Login", async (req, res, next) => {
   try {
     // check that username exists
@@ -88,6 +100,9 @@ router.post("/Login", async (req, res, next) => {
   }
 });
 
+/**
+ * Logs out the current user by resetting their session and sends a success message.
+ */
 router.post("/Logout", function (req, res) {
   req.session.reset(); // reset the session info --> send cookie when  req.session == undefined!!
   res.send({ success: true, message: "logout succeeded" });

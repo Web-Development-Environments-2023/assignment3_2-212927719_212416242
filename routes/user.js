@@ -22,6 +22,9 @@ router.use(async function (req, res, next) {
 });
 
 
+/**
+ * Marks a recipe as a favorite for the current user.
+ */
 router.post('/addFavorite', async (req, res, next) => {
   try {
     const user_id = req.session.user_id;
@@ -34,6 +37,10 @@ router.post('/addFavorite', async (req, res, next) => {
 })
 
 
+/**
+ * Async function that retrieves the favorite recipes of a user and sends the details of those recipes
+ * in the response.
+ */
 router.get('/favorites', async (req, res, next) => {
   try {
     const user_id = req.session.user_id;
@@ -47,6 +54,9 @@ router.get('/favorites', async (req, res, next) => {
   }
 });
 
+/**
+ * Async function that adds a recipe to a user's meal plan.
+ */
 router.post('/addToMeal', async (req, res, next) => {
   try {
     const user_id = req.session.user_id;
@@ -58,6 +68,10 @@ router.post('/addToMeal', async (req, res, next) => {
   }
 })
 
+/**
+ * Async function that retrieves the meal recipes for the current user and sends the
+ * recipe details as a response.
+ */
 router.get('/mealRecipes', async (req, res, next) => {
   try {
     const recipes_id = await user_utils.getMealRecipes(req.session.user_id);
@@ -71,6 +85,9 @@ router.get('/mealRecipes', async (req, res, next) => {
 });
 
 
+/**
+ * Marks a recipe as watched for the current user.
+ */
 router.post('/addWatched', async (req, res, next) => {
   try {
     const user_id = req.session.user_id;
@@ -84,6 +101,10 @@ router.post('/addWatched', async (req, res, next) => {
 
 
 
+/**
+ * Async function that retrieves the watched recipes for the current user and returns
+ * the details of those recipes.
+ */
 router.get('/lastWatchRecipes', async (req, res, next) => {
   try {
     const recipes_id = await user_utils.getWatchedRecipes(req.session.user_id, req.query.limit);
@@ -98,6 +119,17 @@ router.get('/lastWatchRecipes', async (req, res, next) => {
 
 
 
+/**
+ * Handles a POST request to create a new recipe in the database.
+ * @param {Object} req - The request object containing the recipe information in the body.
+ * @param {string} req.body.name - The name of the recipe.
+ * @param {string} req.body.mainImage.path - The path to the main image of the recipe.
+ * @param {number} req.body.time - The time it takes to make the recipe.
+ * @param {number} req.body.popularity - The popularity of the recipe.
+ * @param {boolean} req.body.vegan - Whether or not the recipe is vegan.
+ * @param {boolean} req.body.vegetarian - Whether or not the recipe is vegetarian.
+ * @
+ */
 router.post("/singlerecipe", async (req, res, next) => {
   try {
     const name = req.body.name;
@@ -123,6 +155,9 @@ router.post("/singlerecipe", async (req, res, next) => {
   }
 });
 
+/**
+ * GET request handler for retrieving all recipes associated with the current user.
+  */
 router.get('/myRecipes', async (req, res, next) => {
   try {
     const recipes = await user_utils.getUserRecipes(req.session.user_id);

@@ -34,6 +34,14 @@ async function getRandomDetails(amount) {
     return formatListOfRecipes(recipes_info.data.recipes);
 }
 
+async function getRecipeInstrctions(recipe_id) {
+    let recipe =  await axios.get(`${api_domain}/${recipe_id}/analyzedInstructions`, {
+        params: {
+            apiKey: process.env.spooncular_apiKey,
+        }
+    });
+    return recipe.data;
+}
 
 async function getSearchedRecipesDetails(query, limit, cuisine, diet, intolerances) {
     let recipes_info = await axios.get(`${api_domain}/complexSearch`, {
@@ -64,9 +72,9 @@ function formatListOfRecipes(listOfRecipes) {
     };
 }
 
-function formatIngredients(extendedIngredients){
+function formatIngredients(extendedIngredients) {
     let ingridients = []
-    for (const ingredientObj of extendedIngredients){
+    for (const ingredientObj of extendedIngredients) {
         let measure = ingredientObj.measures.metric;
         ingridients.push({
             ingridient: ingredientObj.name,
@@ -80,9 +88,9 @@ function formatIngredients(extendedIngredients){
 }
 
 function formatrecipe(recipe_data) {
-    let { id, title, readyInMinutes, image, aggregateLikes, vegan, vegetarian, glutenFree, extendedIngredients, servings, instructions} = recipe_data;
+    let { id, title, readyInMinutes, image, aggregateLikes, vegan, vegetarian, glutenFree, extendedIngredients, servings, instructions } = recipe_data;
     let listOfIngredients = formatIngredients(extendedIngredients);
-    if(instructions != null)
+    if (instructions != null)
         instructions = instructions.split(". ")
     return {
         id: id,
@@ -101,4 +109,4 @@ function formatrecipe(recipe_data) {
     }
 }
 
-module.exports = {getRecipeDetails, getRandomDetails, getlistRecipesDetails, getSearchedRecipesDetails};
+module.exports = { getRecipeDetails, getRandomDetails, getlistRecipesDetails, getSearchedRecipesDetails, getRecipeInstrctions };

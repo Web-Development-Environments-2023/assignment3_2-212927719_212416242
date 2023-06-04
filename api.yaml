@@ -98,6 +98,26 @@ paths:
             json:
               schema:
                 $ref: "#/components/schemas/recipeGet"
+  /recipes/instructions:
+    get:
+      tags:
+      - Recipes
+      summary: return instructions of recipe by id
+      description: send recipe id and get its full content
+      operationId: getRecipeInstructions
+      parameters:
+      - in: query
+        name: recipeid
+        description: id of the recipe you want to get
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: recipe with given recipe id
+          content:
+            json:
+              schema:
+                $ref: "#/components/schemas/instructions"
   /users/singlerecipe:
     post:
       tags:
@@ -229,6 +249,24 @@ paths:
           description: successfully added a favorite
         '400':
           description: Invalid ID
+  /users/addToMeal:
+    post:
+      tags:
+      - User
+      - Recipes
+      operationId: addMealRrecipe
+      summary: send an id of a recipe for the server to add it to meal
+      description: send an id of a recipe for the server to add it to meal
+      requestBody:
+        content:
+          json:
+            schema:
+              $ref: "#/components/schemas/recipeId"
+      responses:
+        '200':
+          description: successfully added a favorite
+        '400':
+          description: Invalid ID
   /recipes/search:
     get:
       tags:
@@ -321,9 +359,7 @@ components:
         instructions:
           type: array
           items:
-            type: string
-            example: first put 3.5 kg of flour into the mixer
-            description: array of instuction of the recipe
+            $ref: "#/components/schemas/instructions"
         numberOfPortions:
           type: number
           example: 7.5
@@ -437,6 +473,56 @@ components:
       required:
       - username
       - password
+    equipment:
+      properties:
+        id:
+          type: integer
+          example: 404783
+        image:
+          type: string
+          example: bowl.jpg
+        name:
+          type: string
+          example: bowl
+    ingridient:
+      properties:
+        id:
+          type: integer
+          example: 2047
+        image:
+          type: string
+          example: salt.jpg
+        name:
+          type: string
+          example: salt
+    instruction:
+      properties:
+        number:
+          type: integer
+          example: 3
+        steps:
+          type: string
+          example: Whisk together the flour, pecans, granulated sugar, light brown sugar, baking powder, baking soda, and salt in a medium bowl.
+        equipment:
+          type: array
+          items:
+            $ref: "#/components/schemas/equipment"
+        ingredients:
+          type: array
+          items:
+            $ref: "#/components/schemas/ingridient"
+    instructions:
+      properties:
+        name:
+          type: string
+          example: ""
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/instruction"
+              
+
+
 servers:
   - description: Online Server
     url: https://aflalo-teva.cs.bgu.ac.il/

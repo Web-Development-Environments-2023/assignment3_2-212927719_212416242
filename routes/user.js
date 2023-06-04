@@ -34,11 +34,33 @@ router.post('/addFavorite', async (req, res, next) => {
 })
 
 
-
 router.get('/favorites', async (req, res, next) => {
   try {
     const user_id = req.session.user_id;
     const recipes_id = await user_utils.getFavoriteRecipes(user_id);
+    recipes_id_array = [];
+    recipes_id.map((element) => recipes_id_array.push(element.recipe_id)); //extracting the recipe ids into array
+    const results = await recipe_utils.getlistRecipesDetails(recipes_id_array);
+    res.status(200).send(results);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/addToMeal', async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+    const recipe_id = req.body.recipeId;
+    await user_utils.addToMeal(user_id, recipe_id);
+    res.status(200).send("The Recipe successfully saved to meal");
+  } catch (error) {
+    next(error);
+  }
+})
+
+router.get('/mealRecipes', async (req, res, next) => {
+  try {
+    const recipes_id = await user_utils.getMealRecipes(req.session.user_id);
     recipes_id_array = [];
     recipes_id.map((element) => recipes_id_array.push(element.recipe_id)); //extracting the recipe ids into array
     const results = await recipe_utils.getlistRecipesDetails(recipes_id_array);

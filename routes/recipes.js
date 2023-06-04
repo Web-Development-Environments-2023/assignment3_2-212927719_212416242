@@ -34,14 +34,21 @@ router.get("/listofrecipes", async (req, res, next) => {
 
 router.get("/search", async (req, res, next) => {
   try {
-    const recipe = await recipes_utils.getSearchedRecipesDetails(req.query.query, req.query.limit, req.query.cuisine ,
-       req.query.diet, req.query.intolerances );
+    const recipe = await recipes_utils.getSearchedRecipesDetails(req.query.query, req.query.limit, req.query.cuisine,
+      req.query.diet, req.query.intolerances);
     res.send(recipe);
   } catch (error) {
     next(error);
   }
 });
 
-
+router.get("/instructions", async (req, res, next) => {
+  try {
+    const recipe = await recipes_utils.getRecipeInstrctions(req.query.recipeid);
+    res.send(recipe);
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = router;

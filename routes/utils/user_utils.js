@@ -21,4 +21,12 @@ async function getUserRecipes(user_id){
     return await DButils.execQuery(`select * from recipes where user_id='${user_id}'`);
 }
 
-module.exports = {getUserRecipes, markAsFavorite, getFavoriteRecipes, markAsWatched, getWatchedRecipes};
+async function addToMeal(user_id, recipe_id) {
+    await DButils.execQuery(`insert into meals(user_id, recipe_id) values ('${user_id}',${recipe_id})`);
+}
+
+async function getMealRecipes(user_id) {
+    return await DButils.execQuery(`select recipe_id from meals where user_id='${user_id}'`);
+}
+
+module.exports = {getUserRecipes, markAsFavorite, getFavoriteRecipes, markAsWatched, getWatchedRecipes, addToMeal, getMealRecipes};

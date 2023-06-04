@@ -1,0 +1,442 @@
+---
+openapi: 3.0.3
+info:
+  version: 1.0.0
+  title: Grandma and friends's recipes
+  description: The Recipes Website API provides developers with access to a comprehensive
+    collection of recipes and related information from a recipes website. It allows
+    developers to integrate recipe data into their own applications, websites, or
+    services, enabling users to search for recipes, retrieve detailed recipe information,
+    and perform various recipe-related actions.
+paths:
+  /login:
+    post:
+      tags:
+      - User
+      summary: the user authentication with the server
+      description: user gives it's username and password
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/login"
+      responses:
+        '200':
+          description: OK
+  /logout:
+    post:
+      tags:
+      - User
+      description: logout the user from the session
+      operationId: logout
+      responses:
+        '200':
+          description: OK
+  /register:
+    post:
+      tags:
+      - User
+      summary: new user added to the website
+      description: current person gives it's detials to create a new user in the system
+        with a token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/userDetails"
+      responses:
+        '200':
+          description: Successful registration
+        '400':
+          description: Invalid request - the username is already taken or the passwords
+            do not match or the country doesn't exist
+        '500':
+          description: Internal server error - the registration could not be completed
+  /recipes/listofrecipes:
+    get:
+      tags:
+      - Recipes
+      summary: returns list of specific recipes
+      description: send number of recipes to skip and  max number of recipes to return
+        and get the recipes in the range
+      operationId: getRecipes
+      parameters:
+      - in: query
+        name: ids
+        description: array of ids
+        schema:
+          type: array
+          items:
+            type: integer
+      responses:
+        '200':
+          description: All the recipes
+          content:
+            json:
+              schema:
+                  $ref: "#/components/schemas/recipesGet"
+  /recipes/singlerecipe:
+    get:
+      tags:
+      - Recipes
+      summary: return recipes by id
+      description: send recipe id and get its full content
+      operationId: getRecipe
+      parameters:
+      - in: query
+        name: recipeid
+        description: id of the recipe you want to get
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: recipe with given recipe id
+          content:
+            json:
+              schema:
+                $ref: "#/components/schemas/recipeGet"
+  /users/singlerecipe:
+    post:
+      tags:
+      - Recipes
+      - User
+      operationId: addRecipe
+      responses:
+        '200':
+          description: successfully add recipe
+      requestBody:
+        content:
+          json:
+            schema:
+              $ref: "#/components/schemas/recipeBase"
+  /recipes/random:
+    get:
+      tags:
+      - Recipes
+      summary: return random recipes
+      description: send amount of random recipes to recieve from server
+      operationId: getRandoRecipes
+      parameters:
+      - in: query
+        name: amount
+        example: 5
+        description: amount of random recipes you want to get back
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: recipe with given recipe id
+          content:
+            json:
+              schema:
+                $ref: "#/components/schemas/recipesGet"
+  /users/lastWatchRecipes:
+    get:
+      tags:
+      - User
+      - Recipes
+      summary: return last n watched recipes
+      description: send a number n and the server sends back the n last recipes
+      operationId: getLastWatchRecipes
+      parameters:
+      - in: query
+        name: limit
+        example: 5
+        description: amount of last watched recipes you want to get back
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: recipe with given recipe id
+          content:
+            json:
+              schema:
+                $ref: "#/components/schemas/recipesGet"
+  /users/myRecipes:
+    get:
+      tags:
+      - User
+      - Recipes
+      summary: return recipes that created by the user
+      description: return recipes that created by the user
+      operationId: getMyRecipes
+      parameters:
+      - in: query
+        name: limit
+        example: 5
+        description: amount of last watched recipes you want to get back
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: recipe with given recipe id
+          content:
+            json:
+              schema:
+                $ref: "#/components/schemas/recipesGet"
+  /users/addWatched:
+    post:
+      tags:
+      - User
+      - Recipes
+      operationId: watchedRecipe
+      summary: add recipe to user's watched list
+      description: add a recipe to watches recipes list in server's side
+      responses:
+        '200':
+          description: successfully add recipe to watch list
+        '400':
+          description: Invalid ID
+      requestBody:
+        content:
+          json:
+            schema:
+              $ref: "#/components/schemas/recipeId"
+  /users/favorites:
+    get:
+      tags:
+      - User
+      - Recipes
+      summary: new user added to the website
+      description: returns favorites recipes by the given token
+      operationId: getFavorites
+      responses:
+        '200':
+          description: recipe with given recipe id
+          content:
+            json:
+              schema:
+                $ref: "#/components/schemas/recipesGet"
+  /users/addFavorite:
+    post:
+      tags:
+      - User
+      - Recipes
+      operationId: addFavoriteRrecipe
+      summary: new favorite recipe added to the website
+      description: send an id of a recipe for the server to maek it as a favorite
+        recipe
+      requestBody:
+        content:
+          json:
+            schema:
+              $ref: "#/components/schemas/recipeId"
+      responses:
+        '200':
+          description: successfully added a favorite
+        '400':
+          description: Invalid ID
+  /recipes/search:
+    get:
+      tags:
+      - Recipes
+      summary: returns list of all recipes in the site
+      description: sends number of recipes from server's database to client
+      operationId: searchRecipes
+      parameters:
+      - in: query
+        name: query
+        description: query the client want to search
+        schema:
+          example: banana
+          type: string
+      - in: query
+        name: limit
+        description: max number of recipes to return
+        schema:
+          example: 3
+          type: integer
+      - in: query
+        name: cuisine
+        description: filter by cuisine
+        schema:
+          example: italian
+          type: string
+      - in: query
+        name: diet
+        description: filter by diet
+        schema:
+          example: vegetarian
+          type: string
+      - in: query
+        name: intolerances
+        description: filters by intolerances
+        schema:
+          example: gluten
+          type: string
+      responses:
+        '200':
+          description: All the recipes the user wanted
+          content:
+            json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/recipesGet"
+components:
+  schemas:
+    recipeBase:
+      required:
+      - name
+      - mainImage
+      - time
+      - popularity
+      - vegan
+      - vegetarian
+      - gluten
+      - instructions
+      - numberOfPortions
+      - ingredients
+      properties:
+        mainImage:
+          $ref: "#/components/schemas/image"
+        name:
+          type: string
+          example: pancake
+          description: name of the recipe
+        time:
+          type: number
+          format: float
+          example: 10
+          description: time in minutes that takes to create the meal
+        popularity:
+          type: integer
+          example: 12
+          description: number of likes the recipe got
+        vegan:
+          type: boolean
+          example: true
+          description: does the meal vegan
+        vegetarian:
+          type: boolean
+          example: false
+          description: does the meal vegetarian
+        glutenFree:
+          type: boolean
+          example: true
+          description: does the meal include gluten
+        instructions:
+          type: array
+          items:
+            type: string
+            example: first put 3.5 kg of flour into the mixer
+            description: array of instuction of the recipe
+        numberOfPortions:
+          type: number
+          example: 7.5
+          description: the amount of portions from the recipe
+        ingredients:
+          type: array
+          items:
+            type: object
+            properties:
+              ingredient:
+                type: string
+                example: flour
+                description: single ingredient name
+              amount:
+                type: object
+                properties:
+                  amount:
+                    type: number
+                    example: 3.5
+                    description: amount of metrial from unit of measure
+                  unit:
+                    type: string
+                    example: kg
+                    description: name of unit of measure
+    recipeGet:
+      properties:
+        id:
+          type: integer
+          example: 13
+          description: recipe id
+        recipe:
+          $ref: "#/components/schemas/recipeBase"
+    recipesGet:
+      properties:
+        amount:
+          type: integer
+          example: 15
+          description: amount of recipes returned
+        recipes:
+          type: array
+          items:
+            $ref: "#/components/schemas/recipeGet"
+    image:
+      required:
+      - path
+      properties:
+        path:
+          type: string
+          example: https://url.com/imag.jpg
+          description: url to image
+    recipeId:
+      properties:
+        recipeId:
+          type: integer
+          example: 58
+          description: id of the recipe user watched
+    userDetails:
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 8
+          pattern: "^[A-Za-z]+$"
+          example: sonGoku
+          description: The username for the new user
+        firstName:
+          type: string
+          description: The first name of the new user
+          example: goku
+        lastName:
+          type: string
+          description: The last name of the new user
+          example: son
+        country:
+          type: string
+          description: The country of the new user
+          example: Israel
+        password:
+          type: string
+          minLength: 5
+          maxLength: 10
+          pattern: "^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]+$"
+          description: The password for the new user
+          example: kamehameha
+        confirmPassword:
+          type: string
+          description: Confirm the password for the new user
+          example: kamehameha
+        email:
+          type: string
+          format: email
+          description: The email for the new user
+      required:
+      - username
+      - firstName
+      - lastName
+      - country
+      - password
+      - confirmPassword
+      - email
+    login:
+      properties:
+        username:
+          type: string
+          description: The user's username
+          example: sonGoku
+        password:
+          type: string
+          description: The user's password
+          example: kamehameha
+      required:
+      - username
+      - password
+servers:
+  - description: Online Server
+    url: https://aflalo-teva.cs.bgu.ac.il/

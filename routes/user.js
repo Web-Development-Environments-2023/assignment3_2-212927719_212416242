@@ -22,56 +22,88 @@ router.use(async function (req, res, next) {
 });
 
 
-/**
- * Marks a recipe as a favorite for the current user.
- */
 router.post('/addFavorite', async (req, res, next) => {
   try {
     const user_id = req.session.user_id;
     const recipe_id = req.body.recipeId;
+    if (await user_utils.isFavorite(user_id, recipe_id)) {
+      res.status(400).send("The Recipe already in favorite");
+      return;
+    }
     await user_utils.markAsFavorite(user_id, recipe_id);
     res.status(200).send("The Recipe successfully saved as favorite");
-  } catch (error) {
-    next(error);
-  }
-})
 
-
-/**
- * Async function that retrieves the favorite recipes of a user and sends the details of those recipes
- * in the response.
- */
-router.get('/favorites', async (req, res, next) => {
-  try {
-    const user_id = req.session.user_id;
-    const recipes_id = await user_utils.getFavoriteRecipes(user_id);
-    recipes_id_array = [];
-    recipes_id.map((element) => recipes_id_array.push(element.recipe_id)); //extracting the recipe ids into array
-    const results = await recipe_utils.getlistRecipesDetails(recipes_id_array);
-    res.status(200).send(results);
   } catch (error) {
     next(error);
   }
 });
 
-/**
- * Async function that adds a recipe to a user's meal plan.
- */
-router.post('/addToMeal', async (req, res, next) => {
+router.post('/removeFavorite', async (req, res, next) => {
   try {
     const user_id = req.session.user_id;
     const recipe_id = req.body.recipeId;
-    await user_utils.addToMeal(user_id, recipe_id);
-    res.status(200).send("The Recipe successfully saved to meal");
+    if (!await user_utils.isFavorite(user_id, recipe_id)) {
+      res.status(400).send("The Recipe is not in favorite");
+      return;
+    }
+    await user_utils.unMarkAsFavorite(user_id, recipe_id);
+    res.status(200).send("The Recipe successfully removed from favorite");
   } catch (error) {
     next(error);
   }
 })
 
-/**
- * Async function that retrieves the meal recipes for the current user and sends the
- * recipe details as a response.
- */
+
+router.get('/favorites', async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+    const recipes_id = await user_utils.getFavoriteRecipes(user_id);
+    api_recipes = [];
+    DB_recipes = [];
+    recipes_id.map((element) => {
+      let id_recipe = element.recipe_id
+      if (id_recipe.includes("_")) {
+        DB_recipes.push(id_recipe)
+      }
+      else {
+        api_recipes.push(id_recipe)
+      }
+    }); //extracting the recipe ids into array
+    formatedDBRecipes = [];
+    for (const recipe of DB_recipes) {
+      recipe_id=recipe.split("_")[1];
+      recipe_user_id=recipe.split("_")[0];
+      DBRecipe = await user_utils.getUserRecipe(recipe_user_id,recipe_id);
+      z=recipe_utils.formatDBrecipe(DBRecipe[0], recipe_user_id);
+      formatedDBRecipes.push(z);
+    }
+    const api_results = await recipe_utils.getlistRecipesDetails(api_recipes);
+    const all_recipes=formatedDBRecipes.concat(api_results.recipes)
+    const return_json={
+      amount:(api_results.amount+formatedDBRecipes.length),
+      recipes: all_recipes
+    };
+    res.status(200).send(return_json);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/addToMeal', async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+    const recipe_id = req.body.recipeId;
+    try {
+      await user_utils.addToMeal(user_id, recipe_id);
+      res.status(200).send("The Recipe successfully saved to meal");
+    } catch (error) {
+      res.status(200).send("The Recipe already in meal");
+    }
+  } catch (error) {
+    next(error);
+  }
+})
+
 router.get('/mealRecipes', async (req, res, next) => {
   try {
     const recipes_id = await user_utils.getMealRecipes(req.session.user_id);
@@ -85,13 +117,13 @@ router.get('/mealRecipes', async (req, res, next) => {
 });
 
 
-/**
- * Marks a recipe as watched for the current user.
- */
 router.post('/addWatched', async (req, res, next) => {
   try {
     const user_id = req.session.user_id;
     const recipe_id = req.body.recipeId;
+    if (user_utils.isWatched(user_id, recipe_id)) {
+      res.status(200).send("The Recipe already in watched");
+    }
     await user_utils.markAsWatched(user_id, recipe_id);
     res.status(200).send("The Recipe successfully saved as watched");
   } catch (error) {
@@ -101,10 +133,6 @@ router.post('/addWatched', async (req, res, next) => {
 
 
 
-/**
- * Async function that retrieves the watched recipes for the current user and returns
- * the details of those recipes.
- */
 router.get('/lastWatchRecipes', async (req, res, next) => {
   try {
     const recipes_id = await user_utils.getWatchedRecipes(req.session.user_id, req.query.limit);
@@ -119,35 +147,25 @@ router.get('/lastWatchRecipes', async (req, res, next) => {
 
 
 
-/**
- * Handles a POST request to create a new recipe in the database.
- * @param {Object} req - The request object containing the recipe information in the body.
- * @param {string} req.body.name - The name of the recipe.
- * @param {string} req.body.mainImage.path - The path to the main image of the recipe.
- * @param {number} req.body.time - The time it takes to make the recipe.
- * @param {number} req.body.popularity - The popularity of the recipe.
- * @param {boolean} req.body.vegan - Whether or not the recipe is vegan.
- * @param {boolean} req.body.vegetarian - Whether or not the recipe is vegetarian.
- * @
- */
 router.post("/singlerecipe", async (req, res, next) => {
   try {
     const name = req.body.name;
-    const mainImage = req.body.mainImage.path;
+    const mainImage = req.body.mainImage;
     const time = req.body.time;
     const popularity = req.body.popularity;
     const vegan = req.body.vegan;
     const vegetarian = req.body.vegetarian;
     const glutenFree = req.body.glutenFree;
     const numberOfPortions = req.body.numberOfPortions;
+    const summary = req.body.summary;
     const instructions = JSON.stringify(req.body.instructions);
     const ingredients = JSON.stringify(req.body.ingredients);
-    
+
     let x = await DButils.execQuery(
       `INSERT INTO recipes(name, image, time, popularity, vegan, vegetarian, glutenFree, numberOfPortions,\
-         userId, instructions, ingredients) VALUES ('${name}', '${mainImage}', '${time}','${popularity}',\
+         user_id, instructions, ingredients, summary) VALUES ('${name}', '${mainImage}', '${time}','${popularity}',\
           '${vegan}', '${vegetarian}', '${glutenFree}', '${numberOfPortions}', '${req.session.user_id}',\
-           '${instructions}', '${ingredients}')`
+           '${instructions}', '${ingredients}', '${summary}')`
     );
     res.status(201).send({ message: "recipe created", success: true });
   } catch (error) {
@@ -155,29 +173,12 @@ router.post("/singlerecipe", async (req, res, next) => {
   }
 });
 
-/**
- * GET request handler for retrieving all recipes associated with the current user.
-  */
 router.get('/myRecipes', async (req, res, next) => {
   try {
     const recipes = await user_utils.getUserRecipes(req.session.user_id);
     formatedRecipes = [];
-    for (const recipe of recipes){
-      formatedRecipes.push({
-        id: recipe.id,
-        recipe: {
-            mainImage: recipe.image,
-            name: recipe.name,
-            time: recipe.time,
-            popularity: recipe.popularity,
-            vegan: recipe.vegan,
-            vegetarian: recipe.vegetarian,
-            glutenFree: recipe.glutenFree,
-            numberOfPortions: recipe.numberOfPortions,
-            ingredients: JSON.parse(recipe.ingredients),
-            instructions: JSON.parse(recipe.instructions)
-        }
-      });
+    for (const recipe of recipes) {
+      formatedRecipes.push(recipe_utils.formatDBrecipe(recipe, req.session.user_id));
     }
     returnJson = {
       amount: recipes.length,
@@ -189,5 +190,35 @@ router.get('/myRecipes', async (req, res, next) => {
   }
 });
 
+router.get("/singlerecipe", async (req, res, next) => {
+  try {
+    const recipe_id = req.query.recipeid.split("_")[1];
+    const user_id = req.query.recipeid.split("_")[0];
+    const recipe = await user_utils.getUserRecipe(user_id, recipe_id);
+
+    res.status(200).send(recipe_utils.formatDBrecipe(recipe[0], user_id));
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+router.get('/isWatched', async (req, res, next) => {
+  try {
+    const isWatched = await user_utils.isWatched(req.session.user_id, req.query.recipe_id)
+    res.status(200).send(isWatched);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/isFavorite', async (req, res, next) => {
+  try {
+    const isFavorite = await user_utils.isFavorite(req.session.user_id, req.query.recipe_id)
+    res.status(200).send(isFavorite);
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = router;

@@ -2,11 +2,6 @@ const axios = require("axios");
 const api_domain = "https://api.spoonacular.com/recipes";
 
 
-/**
- * Retrieves recipe details for a given recipe ID from the Spoonacular API.
- * @param {number} recipe_id - The ID of the recipe to retrieve details for.
- * @returns {Promise<Object>} - A Promise that resolves to an object containing the formatted recipe details.
- */
 async function getRecipeDetails(recipe_id) {
     let recipe_info = await axios.get(`${api_domain}/${recipe_id}/information`, {
         params: {
@@ -17,11 +12,6 @@ async function getRecipeDetails(recipe_id) {
     return formatrecipe(recipe_info.data)
 }
 
-/**
- * Retrieves details for a list of recipes from the Spoonacular API.
- * @param {Array} ids - An array of recipe IDs to retrieve details for.
- * @returns {Promise} A promise that resolves to a formatted list of recipe details.
- */
 async function getlistRecipesDetails(ids) {
     let recipes_info = await axios.get(`${api_domain}/informationBulk`, {
         params: {
@@ -33,11 +23,6 @@ async function getlistRecipesDetails(ids) {
     return formatListOfRecipes(recipes_info.data);
 }
 
-/**
- * Retrieves a specified amount of random recipe details from the Spoonacular API.
- * @param {number} amount - The number of recipe details to retrieve.
- * @returns {Promise<Array>} - A promise that resolves to an array of formatted recipe details.
- */
 async function getRandomDetails(amount) {
     let recipes_info = await axios.get(`${api_domain}/random`, {
         params: {
@@ -49,13 +34,8 @@ async function getRandomDetails(amount) {
     return formatListOfRecipes(recipes_info.data.recipes);
 }
 
-/**
- * Retrieves the analyzed instructions for a given recipe ID from the Spoonacular API.
- * @param {number} recipe_id - The ID of the recipe to retrieve instructions for.
- * @returns {Promise} A promise that resolves with the analyzed instructions for the recipe.
- */
 async function getRecipeInstrctions(recipe_id) {
-    let recipe =  await axios.get(`${api_domain}/${recipe_id}/analyzedInstructions`, {
+    let recipe = await axios.get(`${api_domain}/${recipe_id}/analyzedInstructions`, {
         params: {
             apiKey: process.env.spooncular_apiKey,
         }
@@ -63,15 +43,6 @@ async function getRecipeInstrctions(recipe_id) {
     return recipe.data;
 }
 
-/**
- * Retrieves recipe details for a given search query, cuisine, diet, and intolerances.
- * @param {string} query - The search query for the recipe.
- * @param {number} limit - The maximum number of recipes to retrieve.
- * @param {string} cuisine - The cuisine type to filter the recipes by.
- * @param {string} diet - The diet type to filter the recipes by.
- * @param {string} intolerances - The intolerances to filter the recipes by.
- * @returns {Promise} A promise that resolves to an array of recipe details.
- */
 async function getSearchedRecipesDetails(query, limit, cuisine, diet, intolerances) {
     let recipes_info = await axios.get(`${api_domain}/complexSearch`, {
         params: {
@@ -81,7 +52,8 @@ async function getSearchedRecipesDetails(query, limit, cuisine, diet, intoleranc
             cuisine: cuisine,
             diet: diet,
             intolerances: intolerances,
-            query: query
+            query: query,
+            instructionsRequired: true
         }
     });
     ids = [];
@@ -90,11 +62,6 @@ async function getSearchedRecipesDetails(query, limit, cuisine, diet, intoleranc
     return getlistRecipesDetails(ids);
 }
 
-/**
- * Formats a list of recipes by calling the formatrecipe function on each recipe in the list.
- * @param {Array} listOfRecipes - the list of recipes to format
- * @returns An object containing the amount of recipes and the formatted recipes.
- */
 function formatListOfRecipes(listOfRecipes) {
     formatedRecipes = []
     for (const recipe of listOfRecipes) {
@@ -106,36 +73,26 @@ function formatListOfRecipes(listOfRecipes) {
     };
 }
 
-/**
- * Formats an array of ingredient objects into a new array of objects with the ingredient name and amount.
- * @param {Array} extendedIngredients - An array of ingredient objects.
- * @returns {Array} An array of objects with the ingredient name and amount.
- */
 function formatIngredients(extendedIngredients) {
-    let ingridients = []
+    let ingredients = []
     for (const ingredientObj of extendedIngredients) {
         let measure = ingredientObj.measures.metric;
-        ingridients.push({
-            ingridient: ingredientObj.name,
+        ingredients.push({
+            name: ingredientObj.name,
             amount: {
                 amount: measure.amount,
                 unit: measure.unitLong
             }
         })
     }
-    return ingridients;
+    return ingredients;
 }
 
-/**
- * Formats recipe data into a more readable format.
- * @param {Object} recipe_data - The recipe data to format.
- * @returns {Object} - An object containing the formatted recipe data.
- */
 function formatrecipe(recipe_data) {
-    let { id, title, readyInMinutes, image, aggregateLikes, vegan, vegetarian, glutenFree, extendedIngredients, servings, instructions } = recipe_data;
+    let { id, title, readyInMinutes, image, aggregateLikes, vegan, vegetarian, glutenFree, extendedIngredients, servings, analyzedInstructions, summary } = recipe_data;
     let listOfIngredients = formatIngredients(extendedIngredients);
-    if (instructions != null)
-        instructions = instructions.split(". ")
+    // if (instructions != null)
+    //     instructions = instructions.split(". ")
     return {
         id: id,
         recipe: {
@@ -147,10 +104,33 @@ function formatrecipe(recipe_data) {
             vegetarian: vegetarian,
             glutenFree: glutenFree,
             numberOfPortions: servings,
-            instructions: instructions,
-            ingredients: listOfIngredients
+            instructions: analyzedInstructions,
+            ingredients: listOfIngredients,
+            summary: summary
         }
     }
 }
 
-module.exports = { getRecipeDetails, getRandomDetails, getlistRecipesDetails, getSearchedRecipesDetails, getRecipeInstrctions };
+
+function formatDBrecipe(recipe, user) {
+    return {
+        id: user + "_" + recipe.id,
+        recipe: {
+            mainImage: recipe.image,
+            name: recipe.name,
+            time: recipe.time,
+            popularity: recipe.popularity,
+            vegan: recipe.vegan,
+            vegetarian: recipe.vegetarian,
+            glutenFree: recipe.glutenFree,
+            numberOfPortions: recipe.numberOfPortions,
+            summary: recipe.summary,
+            ingredients: JSON.parse(recipe.ingredients),
+            instructions: JSON.parse(recipe.instructions)
+        }
+    };
+
+}
+
+module.exports = { getRecipeDetails, getRandomDetails, getlistRecipesDetails, getSearchedRecipesDetails, getRecipeInstrctions, formatDBrecipe };
+

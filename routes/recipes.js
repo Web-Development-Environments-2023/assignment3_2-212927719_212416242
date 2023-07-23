@@ -1,11 +1,9 @@
 var express = require("express");
 var router = express.Router();
 const recipes_utils = require("./utils/recipes_utils");
+const user_utils = require("./utils/user_utils");
 
 
-/**
- * An asynchronous function that retrieves the details of a recipe with the given ID and sends it as a response.
- */
 router.get("/singlerecipe", async (req, res, next) => {
   try {
     const recipe = await recipes_utils.getRecipeDetails(req.query.recipeid);
@@ -15,9 +13,6 @@ router.get("/singlerecipe", async (req, res, next) => {
   }
 });
 
-/**
- * Asynchronously retrieves a random recipe with the specified amount of details from the database.
- */
 router.get("/random", async (req, res, next) => {
   try {
     const recipe = await recipes_utils.getRandomDetails(req.query.amount);
@@ -25,33 +20,9 @@ router.get("/random", async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-});
+})
 
 
-/**
- * An asynchronous function that retrieves the details of a list of recipes based on their IDs.
- */
-router.get("/listofrecipes", async (req, res, next) => {
-  try {
-    const recipe = await recipes_utils.getlistRecipesDetails(req.query.ids);
-    res.send(recipe);
-  } catch (error) {
-    next(error);
-  }
-});
-
-
-/**
- * An asynchronous function that retrieves recipe details based on the given search parameters.
- * @param {Object} req - The request object containing the search parameters.
- * @param {string} req.query.query - The search query string.
- * @param {number} req.query.limit - The maximum number of results to return.
- * @param {string} req.query.cuisine - The cuisine type to filter by.
- * @param {string} req.query.diet - The diet type to filter by.
- * @param {string} req.query.intolerances - The intolerances to filter by.
- * @param {Object} res - The response object to send the retrieved recipe details.
- * @param {Function} next - The next middleware function
- */
 router.get("/search", async (req, res, next) => {
   try {
     const recipe = await recipes_utils.getSearchedRecipesDetails(req.query.query, req.query.limit, req.query.cuisine,
@@ -62,13 +33,42 @@ router.get("/search", async (req, res, next) => {
   }
 });
 
-/**
- * Async function that retrieves the instructions for a recipe with the given ID and sends it as a response.
- */
 router.get("/instructions", async (req, res, next) => {
   try {
     const recipe = await recipes_utils.getRecipeInstrctions(req.query.recipeid);
     res.send(recipe);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// router.get("/familyRecipes", async (req, res, next) => {
+//   try {
+//     // const recipes_id = await recipe_utils.getFamilyRecipes();
+//     recipes_id_array = [];
+//     // recipes_id.map((element) => recipes_id_array.push(element.recipe_id)); //extracting the recipe ids into array
+
+//     const results = await recipe_utils.getlistRecipesDetails(recipes_id_array);
+//     res.status(200).send(results);
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+
+
+router.get('/familyRecipes', async (req, res, next) => {
+  try {
+    user="6"
+    const recipes = await user_utils.getUserRecipes(user);
+    formatedRecipes = [];
+    for (const recipe of recipes) {
+      formatedRecipes.push(recipes_utils.formatDBrecipe(recipe,user));
+    }
+    returnJson = {
+      amount: recipes.length,
+      recipes: formatedRecipes
+    };
+    res.status(200).send(returnJson);
   } catch (error) {
     next(error);
   }
